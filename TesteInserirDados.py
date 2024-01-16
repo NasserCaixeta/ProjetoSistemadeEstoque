@@ -16,37 +16,43 @@ class TelaInsercaoItensCustom(tk.Tk):
         self.cursor = self.conexao.cursor()
 
         # Configuração de estilo
-        style = ttk.Style()
-        style.configure('TLabel', background='black', foreground='white', font=('Arial', 12))
-        style.configure('TEntry', background='black', foreground='white', font=('Arial', 12))
-        style.configure('TButton', background='blue', foreground='white', font=('Arial', 12))
+        self.style = ttk.Style()
+        self.style.configure('TLabel', padding=(5, 5), font=('Arial', 10))
+        self.style.configure('TEntry', padding=(5, 5), font=('Arial', 10))
+        self.style.configure('TButton', padding=(10, 5), font=('Arial', 10))
 
-        self.criar_widgets()
 
-    def criar_widgets(self):
-        self.config(bg='black')  # Define o fundo da janela como preto
+            # Rótulos e campos de entrada estilizados
+        ttk.Label(self, text="Nome:", style="TLabel").grid(row=0, column=1, padx=5, pady=5, sticky=tk.W)
+        self.entry_nome = ttk.Entry(self, style="TEntry")
+        self.entry_nome.grid(row=0, column=2, padx=5, pady=5)
 
-        # Criação dos rótulos e campos de entrada
-        self.criar_label_entry("Nome:", row=0)
-        self.criar_label_entry("Caixa:", row=1)
-        self.criar_label_entry("Unidade:", row=2)
-        self.criar_label_entry("Quilo:", row=3)
-        self.criar_label_entry("Litro:", row=4)
-        self.criar_label_entry("Grama:", row=5)
-        self.criar_label_entry("Prioridade:", row=6)
+        ttk.Label(self, text="Caixa:", style="TLabel").grid(row=1, column=1, padx=5, pady=5, sticky=tk.W)
+        self.entry_caixa = ttk.Entry(self, style="TEntry")
+        self.entry_caixa.grid(row=1, column=2, padx=5, pady=5)
+
+        ttk.Label(self, text="Unidade:", style="TLabel").grid(row=2, column=1, padx=5, pady=5, sticky=tk.W)
+        self.entry_unidade = ttk.Entry(self, style="TEntry")
+        self.entry_unidade.grid(row=2, column=2, padx=5, pady=5)
+
+        ttk.Label(self, text="Quilo:", style="TLabel").grid(row=3, column=1, padx=5, pady=5, sticky=tk.W)
+        self.entry_quilo = ttk.Entry(self, style="TEntry")
+        self.entry_quilo.grid(row=3, column=2, padx=5, pady=5)
+
+        ttk.Label(self, text="Litro:", style="TLabel").grid(row=4, column=1, padx=5, pady=5, sticky=tk.W)
+        self.entry_litro = ttk.Entry(self, style="TEntry")
+        self.entry_litro.grid(row=4, column=2, padx=5, pady=5)
+
+        ttk.Label(self, text="Grama:", style="TLabel").grid(row=5, column=1, padx=5, pady=5, sticky=tk.W)
+        self.entry_grama = ttk.Entry(self, style="TEntry")
+        self.entry_grama.grid(row=5, column=2, padx=5, pady=5)
+
+        ttk.Label(self, text="Prioridade:", style="TLabel").grid(row=6, column=1, padx=5, pady=5, sticky=tk.W)
+        self.entry_prioridade = ttk.Entry(self, style="TEntry")
+        self.entry_prioridade.grid(row=6, column=2, padx=5, pady=5)
 
         # Botão de inserção
-        ttk.Button(self, text="Inserir Item", command=self.inserir_item, style='TButton').grid(row=7, column=0, columnspan=2, pady=10)
-
-        # Configuração do fechamento da janela
-        self.protocol("WM_DELETE_WINDOW", self.fechar_janela)
-
-    def criar_label_entry(self, label_text, row):
-        label = ttk.Label(self, text=label_text, style='TLabel')
-        label.grid(row=row, column=0, sticky='w')
-
-        entry = ttk.Entry(self, style='TEntry')
-        entry.grid(row=row, column=1, padx=5, pady=5)
+        ttk.Button(self, text="Inserir Item", command=self.inserir_item, style="TButton").grid(row=7, column=2, padx=5, pady=5, sticky=tk.W)
 
     def inserir_item(self):
         # Obtém os valores dos campos de entrada
@@ -58,9 +64,10 @@ class TelaInsercaoItensCustom(tk.Tk):
         grama = self.entry_grama.get()
         prioridade = self.entry_prioridade.get()
 
+        
         # Verifica se a prioridade não é 0
         if int(prioridade) == 0:
-            messagebox.showerror("Erro", "A prioridade do item não pode ser 0.")
+            tk.messagebox.showerror("Erro", "A prioridade do item não pode ser 0.")
             return
 
         # Inserir dados na tabela
@@ -79,18 +86,18 @@ class TelaInsercaoItensCustom(tk.Tk):
         self.limpar_campos()
 
     def limpar_campos(self):
-        self.entry_nome.delete(0, 'end')
-        self.entry_caixa.delete(0, 'end')
-        self.entry_unidade.delete(0, 'end')
-        self.entry_quilo.delete(0, 'end')
-        self.entry_litro.delete(0, 'end')
-        self.entry_grama.delete(0, 'end')
-        self.entry_prioridade.delete(0, 'end')
+        self.entry_nome.delete(0, tk.END)
+        self.entry_caixa.delete(0, tk.END)
+        self.entry_unidade.delete(0, tk.END)
+        self.entry_quilo.delete(0, tk.END)
+        self.entry_litro.delete(0, tk.END)
+        self.entry_grama.delete(0, tk.END)
+        self.entry_prioridade.delete(0, tk.END)
 
     def fechar_janela(self):
         # Fechar a conexão com o banco de dados antes de fechar a janela
-        self.conexao.close()
-        self.destroy()
+        self.conexao.fechar_conexao()
+        self.master.destroy()
 
 # Criação da janela principal
 app = TelaInsercaoItensCustom()

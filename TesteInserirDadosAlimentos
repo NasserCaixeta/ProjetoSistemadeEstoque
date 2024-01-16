@@ -1,0 +1,33 @@
+import mysql.connector
+
+class GerenciadorBancoDados:
+    def __init__(self):
+        # Configuração da conexão com o banco de dados MySQL
+        self.conexao = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="senha",
+            database="banco_dados_estoque"
+        )
+        self.cursor = self.conexao.cursor()
+
+    def alterar_tipo_colunas(self):
+        # Altera os campos Quilo e Litro para INT
+        alter_sql = """
+            ALTER TABLE alimentos
+            MODIFY COLUMN Quilo INT,
+            MODIFY COLUMN Litro INT;
+        """
+        self.cursor.execute(alter_sql)
+        print("Campos Quilo e Litro alterados para INT com sucesso.")
+
+    def fechar_conexao(self):
+        # Fecha a conexão com o banco de dados
+        self.cursor.close()
+        self.conexao.close()
+
+# Exemplo de uso
+if __name__ == "__main__":
+    gerenciador_bd = GerenciadorBancoDados()
+    gerenciador_bd.alterar_tipo_colunas()
+    gerenciador_bd.fechar_conexao()
