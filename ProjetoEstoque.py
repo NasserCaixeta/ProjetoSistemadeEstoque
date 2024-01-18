@@ -1,19 +1,107 @@
 import tkinter as tk
-from tkinter import *
 from tkinter import ttk, messagebox, Entry, Label, filedialog, Button, Frame, Tk
 import mysql.connector
 import docx
 from ttkthemes import ThemedTk
 from PIL import Image, ImageTk
+import os
+theme_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Azure Tema", "azure.tcl")
+import os
+icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "IconePrograma.ico")
+
 
 class ConexaoBancoDados:
     def __init__(self):
+        # Primeiro, criamos o banco de dados e as tabelas se não existirem
+        if not self.criar_banco_dados():
+            # Se não foi possível criar o banco de dados, exibir uma mensagem de erro e encerrar o programa
+            messagebox.showerror("Erro", "Não foi possível criar o banco de dados.")
+            exit()
+
+        # Agora, podemos estabelecer a conexão
         self.conexao = mysql.connector.connect(
             host="localhost",
             user="root",
             password="senha",
             database="banco_dados_estoque"
         )
+
+        # Cria as tabelas se não existirem
+        self.criar_tabela_itens()
+        self.criar_tabela_alimentos()
+
+    def verificar_banco_dados(self):
+        try:
+            cursor = self.obter_cursor()
+            cursor.execute("SELECT 1 FROM itens LIMIT 1")
+            result = cursor.fetchone()
+            cursor.close()
+            return result is not None
+        except mysql.connector.Error as e:
+            return False
+
+    def criar_banco_dados(self):
+        try:
+            # Conectar sem especificar um banco de dados
+            conexao_temp = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="senha"
+            )
+            cursor = conexao_temp.cursor()
+
+            # Criar o banco de dados se não existir
+            cursor.execute("CREATE DATABASE IF NOT EXISTS banco_dados_estoque")
+
+            # Fechar a conexão temporária
+            cursor.close()
+            conexao_temp.close()
+
+            return True  # Retorna True se o banco de dados foi criado com sucesso
+        except mysql.connector.Error as e:
+            # Mostrar uma mensagem de erro
+            messagebox.showerror("Erro", f"Não foi possível criar o banco de dados: {e}")
+            return False  # Retorna False se houve um erro ao criar o banco de dados
+
+    def criar_tabela_itens(self):
+        try:
+            cursor = self.obter_cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS itens (
+                    ID INT AUTO_INCREMENT PRIMARY KEY,
+                    Nome VARCHAR(255) NOT NULL,
+                    Caixa INT,
+                    Unidade INT,
+                    Quilo INT,
+                    Litro INT,
+                    Grama INT,
+                    Prioridade INT
+                )
+            ''')
+            cursor.close()
+            self.conexao.commit()
+        except mysql.connector.Error as e:
+            messagebox.showerror("Erro", f"Não foi possível criar a tabela 'itens': {e}")
+
+    def criar_tabela_alimentos(self):
+        try:
+            cursor = self.obter_cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS alimentos (
+                    ID INT AUTO_INCREMENT PRIMARY KEY,
+                    Nome VARCHAR(255) NOT NULL,
+                    Caixa INT,
+                    Unidade INT,
+                    Quilo INT,
+                    Litro INT,
+                    Grama INT,
+                    Prioridade INT
+                )
+            ''')
+            cursor.close()
+            self.conexao.commit()
+        except mysql.connector.Error as e:
+            messagebox.showerror("Erro", f"Não foi possível criar a tabela 'alimentos': {e}")
 
     def obter_cursor(self):
         return self.conexao.cursor()
@@ -418,6 +506,14 @@ class TelaInserirLista(tk.Frame):
         self.botao_exportar_word = ttk.Button(self, text="Exportar para Word", command=self.exportar_para_word, width=16, style= "TButton")
         self.botao_exportar_word.grid(row=12, column=1, pady=10, padx=10, sticky=tk.W)
 
+        # Adicionar botão para limpar toda a lista de saída
+        self.botao_limpar_lista = ttk.Button(self, text="Limpar Lista", command=self.limpar_lista, width=16, style="TButton")
+        self.botao_limpar_lista.grid(row=3, column=2, pady=10, padx=10, sticky=tk.W)
+
+        # Adicionar botão para limpar a unidade selecionada da lista de saída
+        self.botao_limpar_unidade = ttk.Button(self, text="Limpar Unidade", command=self.limpar_unidade_selecionada, width=16, style="TButton")
+        self.botao_limpar_unidade.grid(row=1, column=2, pady=10, padx=10, sticky=tk.W)
+
         # Ajustar as colunas para ocupar menos espaço
         for column in ("Caixa", "Unidade", "Quilo", "Litro", "Grama", "Prioridade"):
             self.treeview_estoque.column(column, width=30, anchor="center")
@@ -603,6 +699,20 @@ class TelaInserirLista(tk.Frame):
             if unidade != '0':
                 self.treeview_estoque.insert("", "end", text=nome, values=(caixa, unidade, quilo, litro, grama, prioridade))
 
+    def limpar_lista(self):
+        # Limpar toda a Treeview da lista para saída
+        for item in self.treeview_saida.get_children():
+            self.treeview_saida.delete(item)
+
+    def limpar_unidade_selecionada(self):
+        # Obter o item selecionado na Treeview de saída
+        item_selecionado = self.treeview_saida.selection()
+
+        # Verificar se algum item foi selecionado
+        if item_selecionado:
+            # Remover o item selecionado na Treeview de saída
+            self.treeview_saida.delete(item_selecionado)
+
     def adicionar_dados_ao_documento(self, document, treeview):
         for item in treeview.get_children():
             nome = treeview.item(item, "text")
@@ -626,8 +736,9 @@ class TelaInserirLista(tk.Frame):
             detalhes = ', '.join(detalhes_itens)
             
             if detalhes:  # Adiciona uma quebra de linha apenas se houver detalhes
-                detalhes = f'{nome}: {detalhes}\n'
+                detalhes = f'{nome}: {detalhes}'
                 document.add_paragraph(detalhes)
+
                     
 
 
@@ -977,14 +1088,12 @@ class TelaAlteracaoAlimentos(ttk.Frame):
         self.master.destroy()
 
 
-
-
 class AplicacaoPrincipal:
     def __init__(self, root):
         self.root = root
         self.root.title("Sistema de Estoque")
 
-        self.root.tk.call("source", "Azure tema/azure.tcl")
+        self.root.tk.call("source", theme_path)
         root.tk.call("set_theme", "light")
         
         
@@ -1011,7 +1120,7 @@ class AplicacaoPrincipal:
         self.aba_insercao = TelaAlteracaoAlimentos(self.notebook, self.conexao)
         self.notebook.add(self.aba_insercao, text="Alteração de Alimentos")
 
-        root.iconbitmap(r'IconePrograma.ico')
+        root.iconbitmap(default=icon_path)
 
     def posicionar_janela(self):  
         # Posicionar a janela no topo e mais para o lado direito, ajuste conforme necessário
@@ -1025,4 +1134,3 @@ if __name__ == "__main__":
     app.posicionar_janela()
     root.resizable(width=False, height=False)
     root.mainloop()
-
